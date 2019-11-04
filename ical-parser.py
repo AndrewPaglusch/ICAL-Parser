@@ -14,16 +14,16 @@ except requests.exceptions.HTTPError as err:
 
 raw_events = []
 curr_event = {}
-curr_tag = ''
+last_tag = ''
 for i in r.text.splitlines():
-    lasttag = i.split(':')[0] if i.split(':')[0].isupper() else lasttag
+    last_tag = i.split(':')[0] if i.split(':')[0].isupper() else last_tag
 
     if i.startswith('END:VEVENT'):
         raw_events.append(curr_event)
         curr_event = {}
         curr_tag = ''
     elif i.startswith(' '):
-        if lasttag == 'DESCRIPTION':
+        if last_tag == 'DESCRIPTION':
             curr_event['description'] = curr_event.get('description', '') + i[1:]
     else:
         tag = i.split(':')[0]
