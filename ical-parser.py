@@ -21,7 +21,7 @@ for i in r.text.splitlines():
     if i.startswith('END:VEVENT'):
         raw_events.append(curr_event)
         curr_event = {}
-        curr_tag = ''
+        last_tag = ''
     elif i.startswith(' '):
         if last_tag == 'DESCRIPTION':
             curr_event['description'] = curr_event.get('description', '') + i[1:]
