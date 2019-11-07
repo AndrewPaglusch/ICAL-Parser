@@ -10,6 +10,6 @@ This is a work-in-progress. By no means will this handle all features of the ICA
 
 Things this will NOT do:
  - Handle different timezones
- - Handle multiple properties with the same name (called "tags" in the code). Last propertie will override all previous with same name
+ - Handle multiple properties with the same name (called "tags" in the code). Last property will override all previous with same name
  - Handle events with no start time
  - A lot more..
