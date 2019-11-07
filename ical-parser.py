@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import requests
+import re
 from datetime import datetime
 
 ICAL = 'https://calendar.google.com/path/to/your/ical/file.ics'
@@ -12,32 +13,44 @@ except requests.exceptions.HTTPError as err:
     print(err)
     exit(1)
 
-raw_events = []
-curr_event = {}
-last_tag = ''
-for i in r.text.splitlines():
-    last_tag = i.split(':')[0] if i.split(':')[0].isupper() else last_tag
+events = []
 
-    if i.startswith('END:VEVENT'):
-        raw_events.append(curr_event)
-        curr_event = {}
-        last_tag = ''
-    elif i.startswith(' '):
-        if last_tag == 'DESCRIPTION':
-            curr_event['description'] = curr_event.get('description', '') + i[1:]
-    else:
-        tag = i.split(':')[0]
-        data = i.split(tag)[1]
-        curr_event[tag.lower()] = data[1:]
+tag_regex = re.compile(r'^[A-Z-]+(?=[;:])')
 
-for event in raw_events:
+# loop each event
+for i in r.text.split('END:VEVENT'):
+    last_tag = ''
+    curr_event = {}
 
-    # skip items that have no start time
-    if not event.get('dtstart', None):
+    # loop each line in this event
+    for j in i.splitlines():
+        if len(j) == 0:
+            continue
+
+        tag = tag_regex.match(j)
+
+        if tag:
+            data = j.split(tag.group())[1]
+            curr_event[tag.group().lower().strip()] = data[1:].strip()
+            last_tag = tag.group().lower().strip()
+        else:
+            # this line has no valid tag. Prob a cont of previous tag
+            # take contents and add to end of last tag's value
+            curr_event[last_tag] = curr_event.get(last_tag, '') + j[1:]
+
+    events.append(curr_event)
+
+for event in events:
+    # skip over strange dtstart data that we won't parse
+    #   Ex: DTSTART;TZID=America/Chicago:20170909T060000
+    #   Ex: DTSTART;VALUE=DATE:20181116
+    #   Ex: DTSTART:20170909T060000Z
+    if not re.match(r'^\d{8}T\d{6}', event.get('dtstart', '')):
         continue
 
     date = event['dtstart'].split('T')[0]
     time = event['dtstart'].split('T')[1][:-1]
+
     t = datetime.strptime(f'{date} {time}', '%Y%m%d %H%M%S')
     min_until_event = int((t - datetime.utcnow()).total_seconds() / 60)
 
