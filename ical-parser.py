@@ -16,9 +16,10 @@ except requests.exceptions.HTTPError as err:
 events = []
 
 tag_regex = re.compile(r'^[A-Z-]+(?=[;:])')
+event_regex = r'BEGIN:VEVENT(?:(?!\b(?:END|BEGIN):VEVENT\b)[\s\S])*[\s\S]*?END:VEVENT'
 
 # loop each event
-for i in r.text.split('END:VEVENT'):
+for i in re.findall(event_regex, r.text, re.MULTILINE | re.DOTALL):
     last_tag = ''
     curr_event = {}
 
